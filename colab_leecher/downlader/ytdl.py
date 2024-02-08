@@ -1,6 +1,3 @@
-# copyright 2023 © Xron Trix | https://github.com/Xrontrix10
-
-
 import logging
 import yt_dlp
 from asyncio import sleep
@@ -72,25 +69,15 @@ def YouTubeDL(url):
         global YTDL
 
         if d["status"] == "downloading":
-            if d.get("total_bytes"):
-                total_bytes = d["total_bytes"]
-            elif d.get("total_bytes_estimate"):
-                total_bytes = d["total_bytes_estimate"]
-            else:
-                total_bytes = 0
+            total_bytes = d.get("total_bytes", 0)  # Use 0 as default if total_bytes is None
             dl_bytes = d.get("downloaded_bytes", 0)
             percent = d.get("downloaded_percent", 0)
             speed = d.get("speed", "N/A")
             eta = d.get("eta", 0)
 
-            if percent == 0 and total_bytes != 0:
-                percent = round(
-                    (float(dl_bytes) * 100 / float(total_bytes)), 2)
+            if total_bytes:
+                percent = round((float(dl_bytes) * 100 / float(total_bytes)), 2)
 
-            # print(
-            #     f"\rDL: {sizeUnit(dl_bytes)}/{sizeUnit(total_bytes)} | {percent}% | Speed: {sizeUnit(speed)}/s | ETA: {eta}",
-            #     end="",
-            # )
             YTDL.header = ""
             YTDL.speed = sizeUnit(speed)
             YTDL.percentage = percent
@@ -149,8 +136,8 @@ async def get_YT_Name(link):
     with yt_dlp.YoutubeDL({"logger": MyLogger()}) as ydl:
         try:
             info = ydl.extract_info(link, download=False)
-            if "title" in info: 
-                return info["title"] 
+            if "title" in info and info["title"]: 
+                return info["title"]
             else:
                 return "UNKNOWN DOWNLOAD NAME"
         except Exception as e:
