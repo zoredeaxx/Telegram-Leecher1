@@ -1,6 +1,3 @@
-# copyright 2023 © Xron Trix | https://github.com/Xrontrix10
-
-
 import re
 import logging
 import subprocess
@@ -18,7 +15,7 @@ async def aria2_Download(link: str, num: int):
     # Create a command to run aria2p with the link
     command = [
         "aria2c",
-        "-x16",
+        "-x16",  # Increase the number of connections per download
         "--seed-time=0",
         "--summary-interval=1",
         "--max-tries=3",
@@ -39,8 +36,6 @@ async def aria2_Download(link: str, num: int):
         if output == b"" and proc.poll() is not None:
             break
         if output:
-            # sys.stdout.write(output.decode("utf-8"))
-            # sys.stdout.flush()
             await on_output(output.decode("utf-8"))
 
     # Retrieve exit code and any error output
