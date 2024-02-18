@@ -79,11 +79,11 @@ def YouTubeDL(url):
                 percent = round((float(dl_bytes) * 100 / float(total_bytes)), 2)
 
             YTDL.header = ""
-            YTDL.speed = sizeUnit(speed)
+            YTDL.speed = sizeUnit(speed) if speed else "N/A"
             YTDL.percentage = percent
-            YTDL.eta = getTime(eta)
-            YTDL.done = sizeUnit(dl_bytes)
-            YTDL.left = sizeUnit(total_bytes)
+            YTDL.eta = getTime(eta) if eta else "N/A"
+            YTDL.done = sizeUnit(dl_bytes) if dl_bytes else "N/A"
+            YTDL.left = sizeUnit(total_bytes) if total_bytes else "N/A"
 
         elif d["status"] == "downloading fragment":
             # log_str = d["message"]
