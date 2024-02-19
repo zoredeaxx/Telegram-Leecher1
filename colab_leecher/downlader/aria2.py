@@ -1,71 +1,34 @@
-import re
+import asyncio
+import libtorrent as lt
 import logging
 import subprocess
+import re
 from datetime import datetime
 from colab_leecher.utility.helper import sizeUnit, status_bar
 from colab_leecher.utility.variables import BOT, Aria2c, Paths, Messages, BotTimes
 
+async def libtorrent_download(link: str, num: int):
+    ses = lt.session()
+    params = {
+        'save_path': Paths.down_path,
+        'storage_mode': lt.storage_mode_t(2),
+        'url': link
+    }
+    handle = ses.add_torrent(params)
 
-async def aria2_Download(link: str, num: int):
-    global BotTimes, Messages
-    name_d = get_Aria2c_Name(link)
-    BotTimes.task_start = datetime.now()
-    Messages.status_head = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<b>🏷️ Name » </b><code>{name_d}</code>\n"
+    while not handle.has_metadata():
+        await asyncio.sleep(1)
 
-    # Create a command to run aria2p with the link
-    command = [
-        "aria2c",
-        "-x16",  # Increase the number of connections per download
-        "--seed-time=0",
-        "--summary-interval=1",
-        "--max-tries=3",
-        "--console-log-level=notice",
-        "-d",
-        Paths.down_path,
-        link,
-    ]
+    total_size = handle.torrent_info().total_size()
+    status = handle.status()
+    while not status.is_seeding:
+        status = handle.status()
+        downloaded = status.total_done
+        progress = downloaded / total_size * 100
+        print(f"Progress: {progress}%")
+        await asyncio.sleep(1)
 
-    # Run the command using subprocess.Popen
-    proc = subprocess.Popen(
-        command, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-
-    # Read and print output in real-time
-    while True:
-        output = proc.stdout.readline()  # type: ignore
-        if output == b"" and proc.poll() is not None:
-            break
-        if output:
-            await on_output(output.decode("utf-8"))
-
-    # Retrieve exit code and any error output
-    exit_code = proc.wait()
-    error_output = proc.stderr.read()  # type: ignore
-    if exit_code != 0:
-        if exit_code == 3:
-            logging.error(f"The Resource was Not Found in {link}")
-        elif exit_code == 9:
-            logging.error(f"Not enough disk space available")
-        elif exit_code == 24:
-            logging.error(f"HTTP authorization failed.")
-        else:
-            logging.error(
-                f"aria2c download failed with return code {exit_code} for {link}.\nError: {error_output}"
-            )
-
-
-def get_Aria2c_Name(link):
-    if len(BOT.Options.custom_name) != 0:
-        return BOT.Options.custom_name
-    cmd = f'aria2c -x10 --dry-run --file-allocation=none "{link}"'
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
-    stdout_str = result.stdout.decode("utf-8")
-    filename = stdout_str.split("complete: ")[-1].split("\n")[0]
-    name = filename.split("/")[-1]
-    if len(name) == 0:
-        name = "UNKNOWN DOWNLOAD NAME"
-    return name
-
+    print("Download complete!")
 
 async def on_output(output: str):
     global link_info
@@ -114,5 +77,5 @@ async def on_output(output: str):
             eta,
             downloaded_bytes,
             total_size,
-            "Aria2c 🧨",
+            "libtorrent 🧨",
         )
