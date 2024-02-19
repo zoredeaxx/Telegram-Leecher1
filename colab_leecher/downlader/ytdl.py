@@ -102,7 +102,6 @@ def YouTubeDL(url):
         "postprocessors": [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}],
         "progress_hooks": [my_hook],
         "writesubtitles": True,  # Enable subtitles download
-        "subtitleslangs": ["en"],  # Specify language for subtitles (English)
         "logger": MyLogger(),
     }
 
