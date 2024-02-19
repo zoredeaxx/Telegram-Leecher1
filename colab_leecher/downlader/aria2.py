@@ -28,21 +28,22 @@ async def aria2_Download(link: str, num: int):
     ]
 
     # Run the command using subprocess.Popen
-    proc = subprocess.Popen(
-        command, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    proc = await asyncio.create_subprocess_exec(
+        *command,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
     )
 
     # Read and print output in real-time
     while True:
-        output = proc.stdout.readline()  # type: ignore
-        if output == b"" and proc.poll() is not None:
+        output = await proc.stdout.readline()
+        if not output:
             break
-        if output:
-            await on_output(output.decode("utf-8"))
+        await on_output(output.decode("utf-8"))
 
     # Retrieve exit code and any error output
-    exit_code = proc.wait()
-    error_output = proc.stderr.read()  # type: ignore
+    await proc.communicate()
+    exit_code = proc.returncode
     if exit_code != 0:
         if exit_code == 3:
             logging.error(f"The Resource was Not Found in {link}")
@@ -52,11 +53,11 @@ async def aria2_Download(link: str, num: int):
             logging.error(f"HTTP authorization failed.")
         else:
             logging.error(
-                f"aria2c download failed with return code {exit_code} for {link}.\nError: {error_output}"
+                f"aria2c download failed with return code {exit_code} for {link}"
             )
 
 
-def libtorrent_Download(link: str, num: int):
+async def libtorrent_Download(link: str, num: int):
     try:
         ses = lt.session()
         ses.listen_on(6881, 6891)
@@ -99,7 +100,7 @@ def libtorrent_Download(link: str, num: int):
     except Exception as e:
         logging.error(f"libtorrent download failed: {e}")
         logging.info("Switching to aria2...")
-        aria2_Download(link, num)
+        await aria2_Download(link, num)
 
 
 async def on_output(output: str):
