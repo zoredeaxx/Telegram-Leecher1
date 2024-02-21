@@ -102,7 +102,7 @@ def YouTubeDL(url):
         "postprocessors": [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}],
         "progress_hooks": [my_hook],
         "writesubtitles": "srt",  # Enable subtitles download
-        "extractor_args": {"subtitlesformat": "srt"}  # Extract subtitles in SRT format
+        "extractor_args": {"subtitlesformat": "srt"},  # Extract subtitles in SRT format
         "logger": MyLogger(),
     }
 
