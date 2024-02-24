@@ -10,7 +10,7 @@ from colab_leecher.utility.variables import BOT, Aria2c, Paths, Messages, BotTim
 
 async def libtorrent_Download(link: str, num: int):
     global BotTimes, Messages
-    name_d = get_Aria2c_Name(link)
+    name_d = await get_Aria2c_Name(link)
     BotTimes.task_start = datetime.now()
     Messages.status_head = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<b>🏷️ Name » </b><code>{name_d}</code>\n"
     
@@ -61,7 +61,7 @@ async def libtorrent_Download(link: str, num: int):
 
 async def aria2_Download(link: str, num: int):
     global BotTimes, Messages
-    name_d = get_Aria2c_Name(link)
+    name_d = await get_Aria2c_Name(link)
     BotTimes.task_start = datetime.now()
     Messages.status_head = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<b>🏷️ Name » </b><code>{name_d}</code>\n"
 
@@ -158,7 +158,8 @@ async def on_output(output: str):
             "Aria2c 🧨",
         )
 
-def get_Aria2c_Name(link):
+
+async def get_Aria2c_Name(link):
     if len(BOT.Options.custom_name) != 0:
         return BOT.Options.custom_name
     cmd = f'aria2c -x10 --dry-run --file-allocation=none "{link}"'
