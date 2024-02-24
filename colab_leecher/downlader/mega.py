@@ -69,18 +69,18 @@ async def extract_info(line: str):
             file_name = parts[0]
             Messages.download_name = file_name
             progress = subparts[0][:-1]
+            if progress != "N/A":
+                progress = round(float(progress))
             downloaded_size = f"{subparts[2]} {subparts[3]}"
             total_size = f"{subparts[7]} {subparts[8]}"
             speed = f"{subparts[9][1:]} {subparts[10][:-1]}"
 
         Messages.status_head = f"<b>📥 DOWNLOADING FROM MEGA » </b>\n\n<b>🏷️ Name » </b><code>{file_name}</code>\n"
         
-        percentage = round(float(progress))
-      
         await status_bar(
             Messages.status_head,
             speed,
-            percentage,
+            progress,
             "🤷‍♂️ !!", # Calculate ETA
             downloaded_size,
             total_size,
