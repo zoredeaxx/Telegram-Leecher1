@@ -4,7 +4,7 @@ from datetime import datetime
 from os import path as ospath
 from PIL import Image
 from pyrogram.errors import FloodWait
-from colab_leecher.utility.variables import BOT, Transfer, BotTimes, Messages, Paths
+from colab_leecher.utility.variables import BOT, Transfer, BotTimes, Messages, Paths, MSG
 from colab_leecher.utility.helper import sizeUnit, fileType, getTime, status_bar, thumbMaintainer, videoExtFix
 
 async def progress_bar(current, total):
