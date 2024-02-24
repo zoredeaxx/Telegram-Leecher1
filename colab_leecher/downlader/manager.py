@@ -1,10 +1,7 @@
-# copyright 2023 © Xron Trix | https://github.com/Xrontrix10
-
-
 import logging
 from natsort import natsorted
 from datetime import datetime
-from asyncio import sleep, get_running_loop
+from asyncio import sleep
 from colab_leecher.downlader.mega import megadl
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from colab_leecher.utility.handler import cancelTask
@@ -12,7 +9,7 @@ from colab_leecher.downlader.ytdl import YTDL_Status, get_YT_Name
 from colab_leecher.downlader.aria2 import aria2_Download, get_Aria2c_Name
 from colab_leecher.utility.helper import isYtdlComplete, keyboard, sysINFO
 from colab_leecher.downlader.telegram import TelegramDownload, media_Identifier
-from colab_leecher.utility.variables import BOT, Gdrive, Transfer, MSG, Messages, Aria2c, BotTimes
+from colab_leecher.utility.variables import BOT, Transfer, MSG, Messages, Aria2c, BotTimes
 from colab_leecher.downlader.gdrive import (
     build_service,
     g_DownLoad,
@@ -22,23 +19,23 @@ from colab_leecher.downlader.gdrive import (
 )
 
 
-async def downloadManager(source, is_ytdl: bool):
+async def downloadManager(sources, is_ytdl: bool):
     message = "\n<b>Please Wait...</b> ⏳\n<i>Merging YTDL Video...</i> 🐬"
     BotTimes.task_start = datetime.now()
     if is_ytdl:
-        for i, link in enumerate(source):
+        for i, link in enumerate(sources):
             await YTDL_Status(link, i + 1)
         try:
             await MSG.status_msg.edit_text(
                 text=Messages.task_msg + Messages.status_head + message + sysINFO(),
                 reply_markup=keyboard(),
             )
-        except Exception:
-            pass
+        except Exception as e:
+            logging.error(f"Error updating message: {e}")
         while not isYtdlComplete():
             await sleep(2)
     else:
-        for i, link in enumerate(source):
+        for i, link in enumerate(sources):
             try:
                 if "drive.google.com" in link:
                     await g_DownLoad(link, i + 1)
@@ -54,13 +51,12 @@ async def downloadManager(source, is_ytdl: bool):
                             + sysINFO(),
                             reply_markup=keyboard(),
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logging.error(f"Error updating message: {e}")
                     while not isYtdlComplete():
                         await sleep(2)
                 elif "mega.nz" in link:
                     executor = ProcessPoolExecutor()
-                    # await loop.run_in_executor(executor, megadl, link, i + 1)
                     await megadl(link, i + 1)
                 else:
                     aria2_dn = f"<b>PLEASE WAIT ⌛</b>\n\n__Getting Download Info For__\n\n<code>{link}</code>"
@@ -68,8 +64,8 @@ async def downloadManager(source, is_ytdl: bool):
                         await MSG.status_msg.edit_text(
                             text=aria2_dn + sysINFO(), reply_markup=keyboard()
                         )
-                    except Exception as e1:
-                        print(f"Couldn't Update text ! Because: {e1}")
+                    except Exception as e:
+                        logging.error(f"Error updating message: {e}")
                     Aria2c.link_info = False
                     await aria2_Download(link, i + 1)
             except Exception as Error:
@@ -79,7 +75,6 @@ async def downloadManager(source, is_ytdl: bool):
 
 
 async def calDownSize(sources):
-    global TRANSFER_INFO
     for link in natsorted(sources):
         if "drive.google.com" in link:
             await build_service()
@@ -87,14 +82,15 @@ async def calDownSize(sources):
             try:
                 meta = getFileMetadata(id)
             except Exception as e:
+                err_msg = ""
                 if "File not found" in str(e):
-                    err = "The file link you gave either doesn't exist or You don't have access to it!"
+                    err_msg = "The file link you provided doesn't exist or you don't have access to it!"
                 elif "Failed to retrieve" in str(e):
-                    err = "Authorization Error with Google ! Make Sure you generated token.pickle !"
+                    err_msg = "Authorization Error with Google! Make sure you generated token.pickle."
                 else:
-                    err = f"Error in G-API: {e}"
-                logging.error(err)
-                await cancelTask(err)
+                    err_msg = f"Error in Google API: {e}"
+                logging.error(err_msg)
+                await cancelTask(err_msg)
             else:
                 if meta.get("mimeType") == "application/vnd.google-apps.folder":
                     Transfer.total_down_size += get_Gfolder_size(id)
@@ -112,7 +108,6 @@ async def calDownSize(sources):
 
 
 async def get_d_name(link: str):
-    global Messages, Gdrive
     if len(BOT.Options.custom_name) != 0:
         Messages.download_name = BOT.Options.custom_name
         return
@@ -122,10 +117,10 @@ async def get_d_name(link: str):
         Messages.download_name = meta["name"]
     elif "t.me" in link:
         media, _ = await media_Identifier(link)
-        Messages.download_name = media.file_name if hasattr(media, "file_name") else "None"  # type: ignore
+        Messages.download_name = media.file_name if hasattr(media, "file_name") else "None"
     elif "youtube.com" in link or "youtu.be" in link:
         Messages.download_name = await get_YT_Name(link)
     elif "mega.nz" in link:
-        Messages.download_name = "Don't Know 🥲 (Trying)" # TODO: Get download name via megadl
+        Messages.download_name = "Don't Know 🤷‍♂️ (Trying)"
     else:
         Messages.download_name = get_Aria2c_Name(link)
