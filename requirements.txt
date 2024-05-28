@@ -10,7 +10,7 @@ opencv-python
 Pillow
 psutil
 pytz
-https://github.com/KurimuzonAkuma/pyrogram.git
+git+https://github.com/KurimuzonAkuma/pyrogram.git
 #pyrogram==2.0.80
 #https://github.com/TelegramPlayGround/pyrogram/archive/unknown_errors.zip
 requests
